@@ -1,8 +1,16 @@
 <template>
-  <div class="movie_body">
+  <div class="movie_body" ref="movie_body">
+    <Loading v-if="isLoading"/>
+      <Scroller v-else :handleToScroll="handleToScroll" :handleToTouchEnd="handleToTouchEnd">
         <ul>
+            <div class="loading" v-if="pullLoading">
+                <div><span></span></div>
+                <div><span></span></div>
+                <div><span></span></div>
+            </div>
+            <li class="pullDown">{{ pullDownMsg }}</li>
             <li v-for="item in movieList" :key="item.id">
-                <div class="pic_show"><img :src="item.img | setWH('128.180')"></div>
+                <div class="pic_show" @tap="handleToDetail"><img :src="item.img | setWH('128.180')"></div>
                 <div class="info_list">
                     <h2>{{ item.nm }} <img v-if="item.version" src="@/assets/maxs.png"></h2>
                     <p>观众评 <span class="grade">{{ item.sc }}</span></p>
@@ -14,31 +22,107 @@
                 </div>
             </li>
         </ul>
+      </Scroller>
     </div>
 </template>
 
 <script>
+// import BScorll from 'better-scroll'
 export default {
     name : 'NowPlaying',
     data () {
         return {
-            movieList : []
+            movieList : [],
+            pullDownMsg : '',
+            isLoading : true,     //加载loading
+            pullLoading : false,  //更新loading
+            prevCityId : -1
+
         }
     },
-    mounted () {
-        this.axios.get('/api/movieOnInfoList?cityId=10')
+    //生命周期
+    activated () {
+        var cityId = this.$store.state.city.id;
+        //如果相等不请求数据 则反之
+        if(this.prevCityId === cityId){return;}
+        this.isLoading = true;
+        this.axios.get('/api/movieOnInfoList?cityId='+cityId)
         .then((res)=>{
             var msg = res.data.msg;
             if(msg === 'ok'){
                 this.movieList = res.data.data.movieList;
+                this.isLoading = false;
+                //改变状态判断是否需要请求数据
+                this.prevCityId = cityId;
+                //V渲染完再执行回调
+                // this.$nextTick(()=>{
+                //     var scroll = new BScorll(this.$refs.movie_body,{
+                //         tap:true,
+                //         probeType:1
+                //     });
+                //     //scroll滑动触发
+                //     scroll.on('scroll',(pos)=>{
+                //         // console.log('scroll');
+                //         if(pos.y > 30){
+                //             this.pullDownMsg = '正在更新中...';
+                //         }
+                //     });
+                //     //scroll滑动结束触发
+                //     scroll.on('touchEnd',(pos)=>{
+                //         // console.log('touchEnd');
+                //         if(pos.y > 30){
+                //             this.axios.get('/api/movieOnInfoList?cityId=11')
+                //             .then((res)=>{
+                //                 var msg = res.data.msg;
+                //                 if(msg === 'ok'){
+                //                     this.pullDownMsg = '更新成功';
+                //                     setTimeout(()=>{
+                //                         this.movieList = res.data.data.movieList;
+                //                         this.pullDownMsg = '';
+                //                     },1000);
+                //                 }
+                //             });
+                //         }
+                //     });
+                // });
             }
         });
+    },
+    methods: {
+        //tap事件
+        handleToDetail() {
+            console.log('asd');
+        },
+        handleToScroll(pos){
+            if(pos.y > 30){
+                this.pullDownMsg = '正在更新中...';
+                this.pullLoading = true;
+            }
+        },
+        handleToTouchEnd(pos){
+            if(pos.y > 30){
+                this.axios.get('/api/movieOnInfoList?cityId=11')
+                .then((res)=>{
+                    var msg = res.data.msg;
+                    if(msg === 'ok'){
+                        this.pullDownMsg = '更新成功';
+                        this.pullLoading = true;
+                        setTimeout(()=>{
+                            this.movieList = res.data.data.movieList;
+                            this.pullDownMsg = '';
+                            this.pullLoading = false;
+                        },1000);
+                    }
+                });
+            }
+        }
     }
 }
 </script>
 
 <style scoped>
 #content .movie_body{ margin-top: 95px; flex:1; overflow:auto; position: absolute; top: 0; bottom: 0; right: 0px; left: 0px;}
+/* #content .movie_body{ flex:1; overflow:auto;} */
 .movie_body ul{ margin:0 12px; overflow: hidden; margin-bottom: 60px;}
 .movie_body ul li{ margin-top:12px; display: flex; align-items:center; border-bottom: 1px #e6e6e6 solid; padding-bottom: 10px;}
 .movie_body .pic_show{ width:64px; height: 90px;}
@@ -50,4 +134,67 @@ export default {
 .movie_body .info_list img{ width:50px; position: absolute; right:10px; top: 5px;}
 .movie_body .btn_mall , .movie_body .btn_pre{ width:47px; height:27px; line-height: 28px; text-align: center; background-color: #f03d37; color: #fff; border-radius: 4px; font-size: 12px; cursor: pointer;}
 .movie_body .btn_pre{ background-color: #3c9fe6;}
+.movie_body .pullDown{margin: 0;padding: 0;border: none; display:block; text-align:center;}
+
+.loading{
+    width: 20px;
+    height: 20px;
+    margin: 20px 0px 0px 100px;
+    position: relative;
+    -webkit-animation: load 3s linear infinite;
+}
+.loading div{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+.loading span{
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #99CC66;
+    position: absolute;
+    left: 50%;
+    margin-top: -10px;
+    margin-left: 0px;
+    -webkit-animation: changeBgColor 3s ease infinite;
+}
+@-webkit-keyframes load{
+    0%{
+        -webkit-transform: rotate(0deg);
+    }
+    33.3%{
+        -webkit-transform: rotate(120deg);
+    }
+    66.6%{
+        -webkit-transform: rotate(240deg);
+    }
+    100%{
+        -webkit-transform: rotate(360deg);
+    }
+}
+@-webkit-keyframes changeBgColor{
+    0%,100%{
+        background: #99CC66;
+    }
+    33.3%{
+        background: #FFFF66;
+    }
+    66.6%{
+        background: #FF6666;
+    }
+}
+.loading div:nth-child(2){
+    -webkit-transform: rotate(120deg);
+}
+.loading div:nth-child(3){
+    -webkit-transform: rotate(240deg);
+}
+.loading div:nth-child(2) span{
+    -webkit-animation-delay: 1s;
+}
+.loading div:nth-child(3) span{
+    -webkit-animation-delay: 2s;
+}
 </style>

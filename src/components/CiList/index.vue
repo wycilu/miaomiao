@@ -1,5 +1,7 @@
 <template>
   <div class="cinema_body">
+      <Loading v-if="isLoading"/>
+      <Scroller v-else>
         <ul>
             <li v-for="item in cinemaList" :key="item.id">
                 <div>
@@ -15,6 +17,7 @@
                 </div>
             </li>
         </ul>
+        </Scroller>
     </div>
 </template>
 
@@ -23,15 +26,24 @@ export default {
     name : 'CiList',
     data(){
         return {
-            cinemaList : []
+            cinemaList : [],
+            isLoading : true,
+            prevCityId : -1
         }
     },
     mounted () {
-        this.axios.get('/api/cinemaList?cityId=10')
+        var cityId = this.$store.state.city.id;
+        //如果相等不请求数据 则反之
+        if(this.prevCityId === cityId){return;}
+        this.isLoading = true;
+        this.axios.get('/api/cinemaList?cityId='+cityId)
         .then((res)=>{
             var msg = res.data.msg;
             if(msg === 'ok'){
                 this.cinemaList = res.data.data.cinemas;
+                this.isLoading = false;
+                //改变状态判断是否需要请求数据
+                this.prevCityId = cityId;
             }
         })    
     },  //过滤器
