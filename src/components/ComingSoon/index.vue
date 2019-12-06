@@ -3,7 +3,7 @@
       <Loading v-if="isLoading"/>
       <Scroller v-else>
         <ul>
-            <li v-for="item in comingList" :key="item.id">
+            <li v-for="item in comingList" :key="item.id" @tap="handleToDetail(item.id)">
                 <div class="pic_show"><img :src="item.img | setWH('128.180')"></div>
                 <div class="info_list">
                     <h2>{{ item.nm }} <img v-if="item.version" src="@/assets/maxs.png"></h2>
@@ -45,6 +45,12 @@ export default {
                 this.prevCityId = cityId;
             }
         });
+    },
+    methods: {
+        //tap事件
+        handleToDetail(movieId) {
+            this.$router.push('/movie/detail/2/'+movieId);
+        }
     }
 }
 </script>

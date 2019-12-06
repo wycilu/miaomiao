@@ -19,6 +19,30 @@ export default {
             component : () => import('@/components/Search')
         },
         {
+            path : 'detail/1/:movieId',
+            components : {
+                //默认
+                default : () => import('@/components/NowPlaying'),
+                detail : () => import('@/views/Movie/detail')
+            },
+            //路由传参
+            props: {
+                detail : true
+            }
+        },
+        {
+            path : 'detail/2/:movieId',
+            components : {
+                //默认
+                default : () => import('@/components/ComingSoon'),
+                detail : () => import('@/views/Movie/detail')
+            },
+            //路由传参
+            props: {
+                detail : true
+            }
+        },
+        {
             path : '/movie',
             redirect : '/movie/nowPlaying'
         }
