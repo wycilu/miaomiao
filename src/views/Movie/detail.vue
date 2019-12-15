@@ -82,7 +82,7 @@ export default {
     components: {
         Header
 	},
-	props: ['movieId'],
+	props: ['movieId'],   //路由组件传参
 	methods: {
 		handleToBack(){
 			this.$router.back();
